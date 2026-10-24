@@ -20,6 +20,7 @@ const wordFrom = (letters: string) =>
 const word = wordFrom('ABC');
 
 describe('matchGuess', () => {
+  //Pattern: invariant. The result always has exactly five colors.
   it('returns exactly five colors', () => {
     fc.assert(
       fc.property(word, word, (secret, guess) => {
@@ -27,6 +28,7 @@ describe('matchGuess', () => {
       }),
     );
   });
+  //Pattern: invariant. Each of the five color results are either G, Y, or B.
   it('only uses the colors G, Y, B', () => {
     fc.assert(
       fc.property(word, word, (secret, guess) => {
@@ -36,13 +38,18 @@ describe('matchGuess', () => {
       }),
     );
   });
+  //Pattern: conditional. If the guess word is the secret word, then return all Greens
   it('guessing the secret gives all greens', () => {
     fc.assert(
       fc.property(word, w => {
+        //targeted generator since it guarantees the guess word is the secret word
         expect(matchGuess(w, w)).toEqual(['G', 'G', 'G', 'G', 'G']);
       }),
     );
   });
+  //Pattern: conditional. If the guess word contains a letter that is in the secret word,
+  // but more times than the secret word, only credit that letter for the number of times
+  // it appears in the secret word
   it('never credits a letter more times than the secret contains it', () => {
     fc.assert(
       fc.property(word, word, (secret, guess) => {
@@ -55,4 +62,12 @@ describe('matchGuess', () => {
       }),
     );
   });
+  //Pattern: metamorphic. Changing the order of (secret, guess) (so swapping the secret
+  // and the guess) doesn't affect where the greens are
+  it('swapping secret and guess does not change green positions', () => {
+    fc.property(word, word, (secret, guess) => {
+      const greens = (s: string, g: string) => matchGuess(s,g).map(c => c === 'G');
+      expect(greens(secret, guess)).toEqual(greens(guess, secret));
+    })
+  })
 });
